@@ -77,7 +77,7 @@ local function EnterApartment(house, apartmentId, new)
                 Wait(500)
                 TriggerEvent('qb-weathersync:client:DisableSync')
                 Wait(100)
-                TriggerServerEvent('qb-apartments:server:SetInsideMeta', house, apartmentId, true, false)
+                TriggerServerEvent('qb-apartments:server:SetInsideMeta', house, apartmentId, true)
                 TriggerServerEvent("InteractSound_SV:PlayOnSource", "houses_door_close", 0.1)
                 TriggerServerEvent("QBCore:Server:SetMetaData", "currentapartment", CurrentApartment)
             end, house)
@@ -98,7 +98,6 @@ local function EnterApartment(house, apartmentId, new)
             Wait(500)
             TriggerEvent('qb-weathersync:client:DisableSync')
             Wait(100)
-            TriggerServerEvent('qb-apartments:server:SetInsideMeta', house, apartmentId, true, true)
             TriggerServerEvent("InteractSound_SV:PlayOnSource", "houses_door_close", 0.1)
             TriggerServerEvent("QBCore:Server:SetMetaData", "currentapartment", CurrentApartment)
         end
@@ -139,16 +138,20 @@ end
 local function SetClosestApartment()
     local pos = GetEntityCoords(PlayerPedId())
     local current = nil
-    local dist = 100
+    local dist = nil
     for id, house in pairs(Apartments.Locations) do
         local distcheck = #(pos - vector3(Apartments.Locations[id].coords.enter.x, Apartments.Locations[id].coords.enter.y, Apartments.Locations[id].coords.enter.z))
-
+        if current ~= nil then
             if distcheck < dist then
                 current = id
+                dist = distcheck
             end
-
+        else
+            dist = distcheck
+            current = id
+        end
     end
-    if current ~= ClosestHouse and LocalPlayer.state.isLoggedIn and not InApartment then
+    if current ~= ClosestHouse and LocalPlayer.state['isLoggedIn'] and not InApartment then
         ClosestHouse = current
         QBCore.Functions.TriggerCallback('apartments:IsOwner', function(result)
             IsOwned = result
@@ -340,10 +343,10 @@ end)
 
 CreateThread(function()
     while true do
-        if LocalPlayer.state.isLoggedIn and not InApartment then
+        if LocalPlayer.state['isLoggedIn'] and not InApartment then
             SetClosestApartment()
         end
-        Wait(5000)
+        Wait(10000)
     end
 end)
 
@@ -352,7 +355,7 @@ CreateThread(function()
 
     while true do
         local sleep = 1000
-        if LocalPlayer.state.isLoggedIn and ClosestHouse then
+        if LocalPlayer.state['isLoggedIn'] and ClosestHouse then
             sleep = 5
             if InApartment then
                 local headerMenu = {}
